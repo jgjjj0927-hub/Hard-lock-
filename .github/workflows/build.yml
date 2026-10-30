@@ -16,14 +16,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Create clean venv
-        run: |
-          python -m venv venv
-          .\venv\Scripts\python.exe -m pip install --upgrade pip
-
       - name: Install dependencies
         run: |
-          .\venv\Scripts\pip.exe install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Exclude TEMP from Defender
         shell: powershell
@@ -36,14 +32,14 @@ jobs:
         run: |
           if (Test-Path build) { Remove-Item -Recurse -Force build }
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          if (Test-Path hardlocker.spec) { Remove-Item -Force hardlocker.spec }
 
       - name: Verify syntax
-        run: |
-          .\venv\Scripts\python.exe -c "import ast; ast.parse(open('hardlocker.py', encoding='utf-8').read())"
+        run: python -c "import ast; ast.parse(open('hardlocker.py', encoding='utf-8').read())"
 
       - name: Build EXE (onedir)
         run: |
-          .\venv\Scripts\pyinstaller.exe --clean --noconsole --onedir --name hardlocker --add-data "assets;assets" --add-data "scream.mp3;." hardlocker.py
+          pyinstaller --clean --noconsole --onedir --name hardlocker --add-data "assets;assets" --add-data "scream.mp3;." hardlocker.py
 
       - name: Upload artifact (folder)
         uses: actions/upload-artifact@v4
