@@ -2,3 +2,4 @@ pillow
 pygame==2.6.1
 psutil
 pywin32
+pyinstaller>=6.0
