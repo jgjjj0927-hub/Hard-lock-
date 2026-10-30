@@ -1,0 +1,52 @@
+name: Build HardLocker
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create clean venv
+        run: |
+          python -m venv venv
+          .\venv\Scripts\python.exe -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
+          .\venv\Scripts\pip.exe install -r requirements.txt
+
+      - name: Exclude TEMP from Defender
+        shell: powershell
+        run: |
+          Add-MpPreference -ExclusionPath $env:TEMP -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE -ErrorAction SilentlyContinue
+
+      - name: Clean old artifacts
+        shell: powershell
+        run: |
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+
+      - name: Verify syntax
+        run: |
+          .\venv\Scripts\python.exe -c "import ast; ast.parse(open('hardlocker.py', encoding='utf-8').read())"
+
+      - name: Build EXE (onedir)
+        run: |
+          .\venv\Scripts\pyinstaller.exe --clean --noconsole --onedir --name hardlocker --add-data "assets;assets" --add-data "scream.mp3;." hardlocker.py
+
+      - name: Upload artifact (folder)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardlocker
+          path: dist/hardlocker/
