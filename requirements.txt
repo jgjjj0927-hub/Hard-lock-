@@ -1,0 +1,4 @@
+pillow
+pygame==2.6.1
+psutil
+pywin32
